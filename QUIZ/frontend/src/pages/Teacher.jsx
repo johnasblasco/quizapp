@@ -111,7 +111,7 @@ const Teacher = () => {
                                                 <h3 className="text-xl font-semibold">{cls.name}</h3>
                                                 <p className="text-gray-600">Teacher: {cls.teacher}</p>
                                                 <Link
-                                                      to="/create-quiz"
+                                                      to="manage-class"
                                                       state={{ classId: cls._id, className: cls.name }}
                                                       className="text-purple-600 hover:underline"
                                                 >
