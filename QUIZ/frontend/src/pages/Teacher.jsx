@@ -103,7 +103,7 @@ const Teacher = () => {
                   <Link
                         key={cls.id}
                         to="manage-class"
-                        state={{ classId: cls.id }} // Pass the classId to the state
+                        state={{ classId: cls.id, className: cls.name }}// Pass the classId to the state
                         className="block bg-white shadow-lg rounded-lg p-4 border border-gray-200 hover:shadow-xl"
                         >
                         <h3 className="text-xl font-semibold">{cls.name}</h3>

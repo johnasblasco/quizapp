@@ -1,14 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import TeacherNav from '../components/Teacher_Navbar';
+import Swal from 'sweetalert2';
 
 const CreateQuiz = () => {
   const location = useLocation();
-  const { classId, className } = location.state || {};
+  const { classId, className } = location.state || {}; // Extract classId and className from state
   const navigate = useNavigate();
 
   const [activityName, setActivityName] = useState('');
   const [questions, setQuestions] = useState([]);
+
+  // Redirect back if classId or className is missing
+  useEffect(() => {
+    if (!classId || !className) {
+      Swal.fire({
+        icon: 'error',
+        title: 'Missing Class Information',
+        text: 'Redirecting to manage classes.',
+      }).then(() => {
+        navigate('/teacher/manage-class');
+      });
+    }
+  }, [classId, className, navigate]);
 
   const handleActivityNameChange = (e) => {
     setActivityName(e.target.value);
@@ -44,79 +58,47 @@ const CreateQuiz = () => {
     setQuestions(updatedQuestions);
   };
 
-  const createActivity = async (activityData) => {
-    try {
-      const response = await fetch('http://localhost:8000/activities/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(activityData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create activity');
-      }
-
-      return await response.json();
-    } catch (error) {
-      throw error;
-    }
-  };
-
   const validateForm = () => {
-    console.log('Activity Name:', activityName);
-    console.log('Class ID:', classId);
-  
     if (!activityName || !classId) {
-      alert('Please fill in the activity name and class.');
+      alert('Please fill in the activity name and select a class.');
       return false;
     }
-  
+
     if (questions.length === 0) {
       alert('Please add at least one question.');
       return false;
     }
-  
+
     for (const question of questions) {
       if (!question.questionText || !question.correctAnswer) {
         alert('Please complete all fields for each question.');
         return false;
       }
-  
-      // For multiple-choice questions, ensure options are filled
-      if (question.type === 'multiple_choice') {
-        if (question.options.some((option) => !option)) {
-          alert('Please fill in all options for multiple-choice questions.');
-          return false;
-        }
+
+      if (question.type === 'multiple_choice' && question.options.some((option) => !option)) {
+        alert('Please fill in all options for multiple-choice questions.');
+        return false;
       }
     }
-  
+
     return true;
   };
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate the form before submitting
     if (!validateForm()) return;
 
-    // Create an object for the activity and questions
     const activityData = {
-      class_id: classId,  // Ensure classId is correctly passed from the location
-      name: activityName,  // Name of the activity
+      class_id: classId,
+      name: activityName,
       questions: questions.map((q) => ({
-        question_type: q.type,  // `type` corresponds to `question_type` in Django model
-        question_text: q.questionText,  // `questionText` corresponds to `question_text` in Django model
-        options: q.options || [],  // Include options for multiple choice questions
-        correct_answer: q.correctAnswer,  // Correct answer for the question
+        question_type: q.type,
+        question_text: q.questionText,
+        options: q.options || [],
+        correct_answer: q.correctAnswer,
       })),
     };
-
-    console.log('Payload being sent:', activityData);  // Log payload for debugging
 
     try {
       const response = await fetch('http://localhost:8000/activities/', {
@@ -132,12 +114,20 @@ const CreateQuiz = () => {
         throw new Error(errorData.error || 'Failed to create activity');
       }
 
-      const responseData = await response.json();
-      alert('Activity created successfully');
-      navigate(`/teacher/manage-class/${classId}`);
+      Swal.fire({
+        icon: 'success',
+        title: 'Activity Created',
+        text: 'Your activity has been created successfully!',
+      }).then(() => {
+        navigate(`/teacher/manage-class`, { state: { classId, className } });
+      });
     } catch (error) {
       console.error('Error creating activity:', error);
-      alert('Error creating activity: ' + error.message);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: `Error creating activity: ${error.message}`,
+      });
     }
   };
 
@@ -188,12 +178,11 @@ const CreateQuiz = () => {
           {questions.map((question, index) => (
             <div key={index} className="mb-6 p-4 bg-white shadow-md rounded">
               <div className="mb-4">
-                <label className="block text-lg font-bold mb-2" htmlFor={`questionText_${index}`}>
+                <label className="block text-lg font-bold mb-2">
                   Question {index + 1}
                 </label>
                 <input
                   type="text"
-                  id={`questionText_${index}`}
                   value={question.questionText}
                   onChange={(e) => handleQuestionTextChange(index, e.target.value)}
                   className="w-full p-2 border border-gray-300 rounded"
