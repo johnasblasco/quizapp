@@ -3,6 +3,7 @@ import { useLocation, Link } from 'react-router-dom';
 import TeacherNav from '../components/Teacher_Navbar';
 import { useUser } from '../UserContext';
 import { Button } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons'; // Import DeleteOutlined icon
 
 export default function ManageClass() {
   const { user } = useUser();
@@ -66,6 +67,36 @@ export default function ManageClass() {
     }
   }, [classId]);
 
+  const handleDeleteActivityByName = async (activityName) => {
+    if (!activityName) {
+      console.error('Activity name is not available');
+      alert('Activity name is missing');
+      return;
+    }
+  
+    try {
+      const response = await fetch(`http://localhost:8000/activities/delete-by-name/`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: activityName }),
+      });
+  
+      if (response.ok) {
+        setActivities((prevActivities) =>
+          prevActivities.filter((activity) => activity.name !== activityName)
+        );
+        alert('Activity deleted successfully!');
+      } else {
+        alert('Failed to delete activity');
+      }
+    } catch (error) {
+      console.error('Error deleting activity:', error);
+      alert('Error deleting activity');
+    }
+  };
+    
   if (!classDetails) return <div>Loading...</div>;
 
   return (
@@ -93,14 +124,22 @@ export default function ManageClass() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
             {/* Display all the Created Activities */}
-            {activities.length > 0 ? (
-              activities.map((activity) => (
+            {activities.map((activity) => (
                 <div
                   key={activity.id}
                   className="bg-white shadow-md rounded-lg p-4 hover:shadow-lg transition-shadow border"
                 >
                   <div className="flex justify-between">
                     <span className="font-bold text-lg">{activity.name}</span>
+
+                    {/* Add Delete Button */}
+                    <Button
+                      icon={<DeleteOutlined />}
+                      danger
+                      onClick={() => handleDeleteActivityByName(activity.name)} // Pass activity.name
+                      size="small"
+                      className="p-0"
+                    />
                   </div>
                   <Link
                     to={`/teacher/view-activity`}
@@ -109,10 +148,7 @@ export default function ManageClass() {
                     View Details
                   </Link>
                 </div>
-              ))
-            ) : (
-              <p className="col-span-full text-center text-gray-500">No activities created for this class yet.</p>
-            )}
+              ))}
           </div>
 
           <div className="my-4 h-full">

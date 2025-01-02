@@ -9,7 +9,10 @@ const CreateQuiz = () => {
   const navigate = useNavigate();
 
   const [activityName, setActivityName] = useState('');
-  const [questions, setQuestions] = useState([]);
+  const [description, setDescription] = useState(''); // Description state
+  const [questions, setQuestions] = useState([]);  // Questions state
+  const [startTime, setStartTime] = useState('');   // State for start time
+  const [endTime, setEndTime] = useState('');       // State for end time
 
   // Redirect back if classId or className is missing
   useEffect(() => {
@@ -26,6 +29,10 @@ const CreateQuiz = () => {
 
   const handleActivityNameChange = (e) => {
     setActivityName(e.target.value);
+  };
+
+  const handleDescriptionChange = (e) => {
+    setDescription(e.target.value);
   };
 
   const handleAddQuestion = (type) => {
@@ -59,8 +66,8 @@ const CreateQuiz = () => {
   };
 
   const validateForm = () => {
-    if (!activityName || !classId) {
-      alert('Please fill in the activity name and select a class.');
+    if (!activityName || !classId || !description || !startTime || !endTime) {
+      alert('Please fill in all fields and select a class.');
       return false;
     }
 
@@ -92,6 +99,9 @@ const CreateQuiz = () => {
     const activityData = {
       class_id: classId,
       name: activityName,
+      description: description,  // Include the description
+      start_time: startTime,
+      end_time: endTime,
       questions: questions.map((q) => ({
         question_type: q.type,
         question_text: q.questionText,
@@ -132,7 +142,7 @@ const CreateQuiz = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-auto bg-gray-100">
       <TeacherNav />
       <div className="flex-grow m-6 w-full">
         <h1 className="text-2xl font-bold mb-4">Create Activity for {className}</h1>
@@ -146,6 +156,51 @@ const CreateQuiz = () => {
               id="activityName"
               value={activityName}
               onChange={handleActivityNameChange}
+              className="w-full p-2 border border-gray-300 rounded"
+              required
+            />
+          </div>
+
+          {/* Add Description Input */}
+          <div className="mb-4">
+            <label className="block text-lg font-bold mb-2" htmlFor="description">
+              Description
+            </label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={handleDescriptionChange}
+              className="w-full p-2 border border-gray-300 rounded"
+              placeholder="Enter activity description"
+              rows="4"
+              required
+            />
+          </div>
+
+          {/* Add Start Time and End Time */}
+          <div className="mb-4">
+            <label className="block text-lg font-bold mb-2" htmlFor="startTime">
+              Start Time
+            </label>
+            <input
+              type="datetime-local"
+              id="startTime"
+              value={startTime}
+              onChange={(e) => setStartTime(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded"
+              required
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-lg font-bold mb-2" htmlFor="endTime">
+              End Time
+            </label>
+            <input
+              type="datetime-local"
+              id="endTime"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded"
               required
             />

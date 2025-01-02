@@ -126,6 +126,19 @@ class ActivityListCreateView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        # Log the error response for debugging
         print("Validation errors:", serializer.errors)  # Debugging line
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        name = request.data.get('name')  # Get the name from the request payload
+
+        if not name:
+            return Response({"error": "Activity name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Find the activity by name
+            activity = Activity.objects.get(name=name)
+            activity.delete()  # Delete the activity
+            return Response({"message": "Activity deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except Activity.DoesNotExist:
+            return Response({"error": "Activity not found."}, status=status.HTTP_404_NOT_FOUND)

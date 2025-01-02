@@ -1,31 +1,62 @@
 import React, { useState, useEffect } from "react";
 import Swal from "sweetalert2";
+import { useLocation, Link } from 'react-router-dom';
 import axios from "axios";
 import Student_Navbar from "../components/Student_Navbar";
 import { useUser } from "../UserContext";
+import { Button } from "antd";
 
 const Student = () => {
   const { user } = useUser();
   const [classes, setClasses] = useState([]);
+  const [activities, setActivities] = useState([]);
   const [joinCode, setJoinCode] = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  useEffect(() => {
-    const fetchClasses = async () => {
-      try {
-        const response = await fetch("http://localhost:8000/classes/");
-        if (response.ok) {
-          const data = await response.json();
-          setClasses(data);
-        } else {
-          console.error("Failed to fetch classes");
-        }
-      } catch (error) {
-        console.error("Error fetching classes:", error);
+  const fetchClasses = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/classes/");
+      if (response.ok) {
+        const data = await response.json();
+        setClasses(data);
+      } else {
+        console.error("Failed to fetch classes");
       }
-    };
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+    }
+  };
+
+  const fetchActivities = async () => {
+    try {
+      const response = await fetch("http://localhost:8000/activities/");
+      if (response.ok) {
+        const data = await response.json();
+        const enrichedActivities = data.map((activity) => {
+          const classInfo = classes.find((cls) => cls.id === activity.class_id);
+          return {
+            ...activity,
+            className: classInfo ? classInfo.name : "Unknown Class",
+          };
+        });
+        setActivities(enrichedActivities);
+      } else {
+        console.error("Failed to fetch activities");
+      }
+    } catch (error) {
+      console.error("Error fetching activities:", error);
+    }
+  };
+
+  useEffect(() => {
     fetchClasses();
-  }, [user.name]);
+  }, []); // Fetch classes once on mount
+
+  useEffect(() => {
+    if (classes.length > 0) {
+      fetchActivities(); // Fetch activities after classes have been fetched
+    }
+  }, [classes]); // Trigger fetchActivities when classes change
 
   const joinClass = async (studentId, classCode) => {
     try {
@@ -127,7 +158,7 @@ const Student = () => {
           </div>
         </section>
 
-        {/* Recent Classes and Quizzes */}
+        {/* Recent Classes and Activities */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Recent Classes */}
           <div className="bg-white p-6 rounded-lg shadow-md">
@@ -162,58 +193,50 @@ const Student = () => {
             </ul>
           </div>
 
-          {/* Recent Quizzes */}
+          {/* Activities */}
           <div className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-bold mb-4">Recent Quizzes</h3>
+            <h3 className="text-xl font-bold mb-4">Activities</h3>
             <ul className="space-y-3">
-              {["Math Quiz", "Science Quiz", "History Quiz"].map(
-                (quiz, index) => (
-                  <li
-                    key={index}
-                    className="flex justify-between items-center p-4 bg-gray-100 rounded-lg"
-                  >
-                    <span>{quiz}</span>
-                    <span className="text-sm text-gray-500">12:00 PM</span>
-                  </li>
-                )
+              {activities.length > 0 ? (
+                activities.map((activity) => {
+                  const classInfo = classes.find(
+                    (cls) => cls.id === activity.class_id
+                  );
+
+                  return (
+                    <li
+                      key={activity.id}
+                      className="flex justify-between items-center p-4 bg-gray-100 rounded-lg"
+                    >
+                      <div className="flex flex-col justify-center">
+                        <span className="font-bold text-xl">
+                          {activity.name}
+                        </span>
+                        <span className="text-sm font-normal text-[#702963]">
+                          {activity.className}
+                        </span>
+                      </div>
+                      <Button className="m-4 w-auto h-auto p-2 rounded-lg shadow-md" type="primary">
+                        <Link
+                          to="/student/take-activity"
+                          state={{
+                            classId: classInfo ? classInfo.id : null,
+                            className: classInfo ? classInfo.name : "Unknown Class",
+                          }}
+                        >
+                          Open
+                        </Link>
+                      </Button>
+                    </li>
+                  );
+                })
+              ) : (
+                <li className="text-gray-500">No activities available</li>
               )}
             </ul>
           </div>
         </div>
       </main>
-
-      {/* Modal */}
-      {showModal && (
-        <div
-          onClick={() => setShowModal(false)}
-          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="bg-white p-8 rounded-lg shadow-lg text-center w-[90%] md:w-[500px]"
-          >
-            <h2 className="text-2xl font-bold text-purple-800 mb-6">
-              Enter Class Code
-            </h2>
-            <input
-              type="text"
-              placeholder="Enter class code"
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value)}
-              className="w-full px-4 py-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400"
-            />
-            <button
-              onClick={() => {
-                joinClass(user.id, joinCode);
-                setJoinCode("");
-              }}
-              className="w-full px-4 py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600"
-            >
-              Join
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
