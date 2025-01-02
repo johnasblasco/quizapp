@@ -1,5 +1,5 @@
-from .models import Student, Teacher, Class
-from .serialize import StudentSerializer, TeacherSerializer, ClassSerializer
+from .models import Student, Teacher, Class, Activity
+from .serialize import StudentSerializer, TeacherSerializer, ClassSerializer, ActivitySerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -115,3 +115,17 @@ class TeacherView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ActivityListCreateView(APIView):
+    def get(self, request):
+        activities = Activity.objects.all()
+        serializer = ActivitySerializer(activities, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = ActivitySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # Log the error response for debugging
+        print("Validation errors:", serializer.errors)  # Debugging line
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

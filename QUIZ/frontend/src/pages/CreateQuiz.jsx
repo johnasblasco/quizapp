@@ -44,32 +44,101 @@ const CreateQuiz = () => {
     setQuestions(updatedQuestions);
   };
 
-  const handleSubmit = (e) => {
+  const createActivity = async (activityData) => {
+    try {
+      const response = await fetch('http://localhost:8000/activities/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(activityData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create activity');
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const validateForm = () => {
+    console.log('Activity Name:', activityName);
+    console.log('Class ID:', classId);
+  
+    if (!activityName || !classId) {
+      alert('Please fill in the activity name and class.');
+      return false;
+    }
+  
+    if (questions.length === 0) {
+      alert('Please add at least one question.');
+      return false;
+    }
+  
+    for (const question of questions) {
+      if (!question.questionText || !question.correctAnswer) {
+        alert('Please complete all fields for each question.');
+        return false;
+      }
+  
+      // For multiple-choice questions, ensure options are filled
+      if (question.type === 'multiple_choice') {
+        if (question.options.some((option) => !option)) {
+          alert('Please fill in all options for multiple-choice questions.');
+          return false;
+        }
+      }
+    }
+  
+    return true;
+  };
+  
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle submitting the activity to the backend
+
+    // Validate the form before submitting
+    if (!validateForm()) return;
+
+    // Create an object for the activity and questions
     const activityData = {
-      classId,
-      activityName,
-      questions,
+      class_id: classId,  // Ensure classId is correctly passed from the location
+      name: activityName,  // Name of the activity
+      questions: questions.map((q) => ({
+        question_type: q.type,  // `type` corresponds to `question_type` in Django model
+        question_text: q.questionText,  // `questionText` corresponds to `question_text` in Django model
+        options: q.options || [],  // Include options for multiple choice questions
+        correct_answer: q.correctAnswer,  // Correct answer for the question
+      })),
     };
 
-    // Send the activity data to the server (replace the URL with your backend endpoint)
-    fetch('http://localhost:8000/activities/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(activityData),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        alert('Activity created successfully');
-        navigate(`/teacher/manage-class/${classId}`);
-      })
-      .catch((error) => {
-        console.error('Error creating activity:', error);
-        alert('Error creating activity');
+    console.log('Payload being sent:', activityData);  // Log payload for debugging
+
+    try {
+      const response = await fetch('http://localhost:8000/activities/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(activityData),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create activity');
+      }
+
+      const responseData = await response.json();
+      alert('Activity created successfully');
+      navigate(`/teacher/manage-class/${classId}`);
+    } catch (error) {
+      console.error('Error creating activity:', error);
+      alert('Error creating activity: ' + error.message);
+    }
   };
 
   return (
@@ -191,10 +260,7 @@ const CreateQuiz = () => {
             </div>
           ))}
 
-          <button
-            type="submit"
-            className="px-6 py-2 bg-blue-600 text-white rounded"
-          >
+          <button type="submit" className="px-6 py-2 bg-blue-600 text-white rounded">
             Create Activity
           </button>
         </form>
