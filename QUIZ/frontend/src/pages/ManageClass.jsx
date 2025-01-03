@@ -131,7 +131,6 @@ export default function ManageClass() {
                 >
                   <div className="flex justify-between">
                     <span className="font-bold text-lg">{activity.name}</span>
-
                     {/* Add Delete Button */}
                     <Button
                       icon={<DeleteOutlined />}

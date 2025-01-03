@@ -108,6 +108,7 @@ const Teacher = () => {
                         >
                         <h3 className="text-xl font-semibold">{cls.name}</h3>
                         <p className="text-gray-600">Teacher: {cls.teacher}</p>
+                        <p className="text-gray-600">Class Code: {cls.class_code}</p>
                   </Link>
             ))}
           </div>
