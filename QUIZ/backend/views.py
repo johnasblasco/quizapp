@@ -1,5 +1,5 @@
-from .models import Student, Teacher, Class
-from .serialize import StudentSerializer, TeacherSerializer, ClassSerializer
+from .models import Student, Teacher, Class, Activity
+from .serialize import StudentSerializer, TeacherSerializer, ClassSerializer, ActivitySerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -115,3 +115,30 @@ class TeacherView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ActivityListCreateView(APIView):
+    def get(self, request):
+        activities = Activity.objects.all()
+        serializer = ActivitySerializer(activities, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = ActivitySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        print("Validation errors:", serializer.errors)  # Debugging line
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        name = request.data.get('name')  # Get the name from the request payload
+
+        if not name:
+            return Response({"error": "Activity name is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Find the activity by name
+            activity = Activity.objects.get(name=name)
+            activity.delete()  # Delete the activity
+            return Response({"message": "Activity deleted successfully."}, status=status.HTTP_204_NO_CONTENT)
+        except Activity.DoesNotExist:
+            return Response({"error": "Activity not found."}, status=status.HTTP_404_NOT_FOUND)

@@ -1,6 +1,8 @@
 import React from 'react'
 import { useNavigate, Link } from 'react-router-dom';
 import { useUser } from '../UserContext'
+import logo1 from '/logo_white.png'
+
 const Teacher_Navbar = () => {
 
       const { user } = useUser();
@@ -9,7 +11,9 @@ const Teacher_Navbar = () => {
       return (
             <aside className="hidden md:flex w-64 bg-purple-800 text-white flex-col">
                   <div className="flex items-center justify-center h-20 border-b border-purple-600">
-                        <div className="text-2xl font-bold">QUIZIT</div>
+                        <div className="flex items-center justify-center w-full">
+                              <img src={logo1} alt="Logo" className="h-auto max-h-50 mt-24 ml-3" />
+                        </div>
                   </div>
                   <div className="flex flex-col flex-grow">
                         <div className="flex items-center px-4 py-6">
